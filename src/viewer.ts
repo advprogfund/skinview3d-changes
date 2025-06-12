@@ -4,6 +4,7 @@ import {
 	loadCapeToCanvas,
 	loadEarsToCanvas,
 	loadEarsToCanvasFromSkin,
+	//loadArmorToCanvas,
 	loadImage,
 	loadSkinToCanvas,
 	type ModelType,
@@ -97,6 +98,18 @@ export interface EarsLoadOptions extends LoadOptions {
 	textureType?: "standalone" | "skin";
 }
 
+/*export interface ArmorLoadOptions extends LoadOptions {
+	/**
+	 * The type of armor displayed ontop of the player skin.
+	 *
+	 * - `"default"` uses the armor texture from the game, defaulting to diamond.
+	 * - `"custom"` allows the user to provide their own texture for the armor (such as one which may be found in a resource pack.)
+	 *
+	 * @defaultValue `"default"`
+	 *
+	textureType?: "default" | "custom";
+}*/
+
 export interface SkinViewerOptions {
 	/**
 	 * The canvas where the renderer draws its output.
@@ -168,6 +181,22 @@ export interface SkinViewerOptions {
 				textureType: "standalone" | "skin";
 				source: RemoteImage | TextureSource;
 		  };
+	
+	/**
+	 * The armor texture which is displayed on the player.
+	 *
+	 * It should be set to show armor from the vanilla pack, where the user can then decide to use a custom texture.
+	 *
+	 * `source` represents texture input, and `textureType` can be either `"default"` or `"custom"`:
+	 *   - `"default"` is the vanilla texture.
+	 *   - `"custom"` is a user-inputted texture.
+	 *
+	armor?:
+		| "current-skin"
+		| {
+				textureType: "default" | "custom";
+				source: RemoteImage | TextureSource;
+		  };/
 
 	/**
 	 * Whether to preserve the buffers until manually cleared or overwritten.
@@ -294,6 +323,7 @@ export class SkinViewer {
 	private skinTexture: Texture | null = null;
 	private capeTexture: Texture | null = null;
 	private earsTexture: Texture | null = null;
+	private armorTexture: Texture | null = null;
 	private backgroundTexture: Texture | null = null;
 
 	private _disposed: boolean = false;
@@ -335,6 +365,7 @@ export class SkinViewer {
 		this.skinCanvas = document.createElement("canvas");
 		this.capeCanvas = document.createElement("canvas");
 		this.earsCanvas = document.createElement("canvas");
+		this.armorCanvas = document.createElement("canvas");
 
 		this.scene = new Scene();
 		this.camera = new PerspectiveCamera();
@@ -388,6 +419,7 @@ export class SkinViewer {
 		this.playerObject.name = "player";
 		this.playerObject.skin.visible = false;
 		this.playerObject.cape.visible = false;
+		//this.playerObject.armor.visible = false;
 		this.playerWrapper = new Group();
 		this.playerWrapper.add(this.playerObject);
 		this.scene.add(this.playerWrapper);
@@ -413,6 +445,12 @@ export class SkinViewer {
 		if (options.ears !== undefined && options.ears !== "current-skin") {
 			this.loadEars(options.ears.source, {
 				textureType: options.ears.textureType,
+			});
+		}
+		if (options.armor !== undefined) {
+			this.loadArmor(options.skin, {
+				model: options.model,
+				ears: options.ears === "current-skin",
 			});
 		}
 		if (options.width !== undefined) {
@@ -533,6 +571,16 @@ export class SkinViewer {
 		this.earsTexture.minFilter = NearestFilter;
 		this.playerObject.ears.map = this.earsTexture;
 	}
+	
+	private recreateArmorTexture(): void {
+		if (this.armorTexture !== null) {
+			this.armorTexture.dispose();
+		}
+		this.armorTexture = new CanvasTexture(this.armorCanvas);
+		this.armorTexture.magFilter = NearestFilter;
+		this.armorTexture.minFilter = NearestFilter;
+		this.playerObject.armor.map = this.armorTexture;
+	}
 
 	loadSkin(empty: null): void;
 	loadSkin<S extends TextureSource | RemoteImage>(
@@ -642,6 +690,41 @@ export class SkinViewer {
 			this.earsTexture = null;
 		}
 	}
+	
+	loadArmor(empty: null): void;
+	loadArmor<S extends TextureSource | RemoteImage>(
+		source: S,
+		options?: ArmorLoadOptions
+	): S extends TextureSource ? void : Promise<void>;
+
+	loadArmor(source: TextureSource | RemoteImage | null, options: ArmorLoadOptions = {}): void | Promise<void> {
+		/*if (source === null) {
+			this.resetArmor();
+		} else if (isTextureSource(source)) {
+			if (options.textureType === "custom") {
+				loadArmorToCanvasFromSkin(this.armorCanvas, source);
+			} else {
+				loadArmorToCanvas(this.armorCanvas, source);
+			}
+			this.recreateArmorTexture();
+
+			if (options.makeVisible !== false) {
+				this.playerObject.armor.visible = true;
+			}
+		} else {
+			return loadImage(source).then(image => this.loadArmor(image, options));
+		}*/
+		this.resetArmor();
+	}
+
+	resetArmor(): void {
+		this.playerObject.armor.visible = false;
+		this.playerObject.armor.map = null;
+		if (this.armorTexture !== null) {
+			this.armorTexture.dispose();
+			this.armorTexture = this.skinTexture;
+		}
+	}
 
 	loadPanorama<S extends TextureSource | RemoteImage>(source: S): S extends TextureSource ? void : Promise<void> {
 		return this.loadBackground(source, EquirectangularReflectionMapping);
@@ -720,6 +803,7 @@ export class SkinViewer {
 		this.resetSkin();
 		this.resetCape();
 		this.resetEars();
+		//this.resetArmor();
 		this.background = null;
 		(this.fxaaPass.fsQuad as FullScreenQuad).dispose();
 	}

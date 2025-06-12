@@ -97,6 +97,8 @@ export class SkinObject extends Group {
 	private layer1MaterialBiased: MeshStandardMaterial;
 	private layer2Material: MeshStandardMaterial;
 	private layer2MaterialBiased: MeshStandardMaterial;
+	private layerArmorMaterial: MeshStandardMaterial;
+	private layerArmorMaterialBiased: MeshStandardMaterial;
 
 	constructor() {
 		super();
@@ -109,6 +111,11 @@ export class SkinObject extends Group {
 			transparent: true,
 			alphaTest: 1e-5,
 		});
+		//this.layerArmorMaterial = new MeshStandardMaterial({
+		//	side: UpmostSide,
+		//	transparent: true,	// I think resource packs support transparency on armor, so this is left as transparent
+		//	alphaTest: 1e-5,
+		//});
 
 		this.layer1MaterialBiased = this.layer1Material.clone();
 		this.layer1MaterialBiased.polygonOffset = true;
@@ -119,6 +126,11 @@ export class SkinObject extends Group {
 		this.layer2MaterialBiased.polygonOffset = true;
 		this.layer2MaterialBiased.polygonOffsetFactor = 1.0;
 		this.layer2MaterialBiased.polygonOffsetUnits = 1.0;
+		
+		//this.layerArmorMaterialBiased = this.layerArmorMaterial.clone();
+		//this.layerArmorMaterialBiased.polygonOffset = true;
+		//this.layerArmorMaterialBiased.polygonOffsetFactor = 1.0;
+		//this.layerArmorMaterialBiased.polygonOffsetUnits = 1.0;
 
 		// Head
 		const headBox = new BoxGeometry(8, 8, 8);
@@ -128,12 +140,17 @@ export class SkinObject extends Group {
 		const head2Box = new BoxGeometry(9, 9, 9);
 		setSkinUVs(head2Box, 32, 0, 8, 8, 8);
 		const head2Mesh = new Mesh(head2Box, this.layer2Material);
+		
+		const headArmorBox = new BoxGeometry(10, 10, 10); // Update with correct numbers later
+		setSkinUVs(headArmorBox, 64, 0, 8, 8, 8);
+		const headArmorMesh = new Mesh(headArmorBox, this.layerArmorMaterial);
 
-		this.head = new BodyPart(headMesh, head2Mesh);
+		this.head = new BodyPart(headMesh, head2Mesh, headArmorMesh);
 		this.head.name = "head";
-		this.head.add(headMesh, head2Mesh);
+		this.head.add(headMesh, head2Mesh, headArmorMesh);
 		headMesh.position.y = 4;
 		head2Mesh.position.y = 4;
+		headArmorMesh.position.y = 4;
 		this.add(this.head);
 
 		// Body
@@ -144,10 +161,14 @@ export class SkinObject extends Group {
 		const body2Box = new BoxGeometry(8.5, 12.5, 4.5);
 		setSkinUVs(body2Box, 16, 32, 8, 12, 4);
 		const body2Mesh = new Mesh(body2Box, this.layer2Material);
+		
+		const bodyArmorBox = new BoxGeometry(9, 13, 5); // Update with correct numbers later
+		setSkinUVs(bodyArmorBox, 16, 48, 8, 12, 4);
+		const bodyArmorMesh = new Mesh(bodyArmorBox, this.layerArmorMaterial);
 
-		this.body = new BodyPart(bodyMesh, body2Mesh);
+		this.body = new BodyPart(bodyMesh, body2Mesh, bodyArmorMesh);
 		this.body.name = "body";
-		this.body.add(bodyMesh, body2Mesh);
+		this.body.add(bodyMesh, body2Mesh, bodyArmorMesh);
 		this.body.position.y = -6;
 		this.add(this.body);
 
@@ -169,15 +190,24 @@ export class SkinObject extends Group {
 			rightArm2Mesh.scale.z = 4.5;
 			setSkinUVs(rightArm2Box, 40, 32, this.slim ? 3 : 4, 12, 4);
 		});
+		
+		const rightArmArmorBox = new BoxGeometry();
+		const rightArmArmorMesh = new Mesh(rightArmArmorBox, this.layerArmorMaterialBiased);
+		this.modelListeners.push(() => {
+			rightArmArmorMesh.scale.x = this.slim ? 4 : 5;	// Update with correct numbers later
+			rightArmArmorMesh.scale.y = 13;
+			rightArmArmorMesh.scale.z = 5;
+			setSkinUVs(rightArmArmorBox, 40, 48, this.slim ? 3 : 4, 12, 4);
+		});
 
 		const rightArmPivot = new Group();
-		rightArmPivot.add(rightArmMesh, rightArm2Mesh);
+		rightArmPivot.add(rightArmMesh, rightArm2Mesh, rightArmArmorMesh);
 		this.modelListeners.push(() => {
 			rightArmPivot.position.x = this.slim ? -0.5 : -1;
 		});
 		rightArmPivot.position.y = -4;
 
-		this.rightArm = new BodyPart(rightArmMesh, rightArm2Mesh);
+		this.rightArm = new BodyPart(rightArmMesh, rightArm2Mesh, rightArmArmorMesh);
 		this.rightArm.name = "rightArm";
 		this.rightArm.add(rightArmPivot);
 		this.rightArm.position.x = -5;
@@ -202,15 +232,24 @@ export class SkinObject extends Group {
 			leftArm2Mesh.scale.z = 4.5;
 			setSkinUVs(leftArm2Box, 48, 48, this.slim ? 3 : 4, 12, 4);
 		});
+		
+		const leftArmArmorBox = new BoxGeometry();
+		const leftArmArmorMesh = new Mesh(leftArmArmorBox, this.layerArmorMaterialBiased);
+		this.modelListeners.push(() => {
+			leftArmArmorMesh.scale.x = this.slim ? 4 : 5;	// Update values later
+			leftArmArmorMesh.scale.y = 13;
+			leftArmArmorMesh.scale.z = 5;
+			setSkinUVs(leftArmArmorBox, 64, 48, this.slim ? 3 : 4, 12, 4);
+		});
 
 		const leftArmPivot = new Group();
-		leftArmPivot.add(leftArmMesh, leftArm2Mesh);
+		leftArmPivot.add(leftArmMesh, leftArm2Mesh, leftArmArmorMesh);
 		this.modelListeners.push(() => {
 			leftArmPivot.position.x = this.slim ? 0.5 : 1;
 		});
 		leftArmPivot.position.y = -4;
 
-		this.leftArm = new BodyPart(leftArmMesh, leftArm2Mesh);
+		this.leftArm = new BodyPart(leftArmMesh, leftArm2Mesh, leftArmArmorMesh);
 		this.leftArm.name = "leftArm";
 		this.leftArm.add(leftArmPivot);
 		this.leftArm.position.x = 5;
@@ -225,12 +264,16 @@ export class SkinObject extends Group {
 		const rightLeg2Box = new BoxGeometry(4.5, 12.5, 4.5);
 		setSkinUVs(rightLeg2Box, 0, 32, 4, 12, 4);
 		const rightLeg2Mesh = new Mesh(rightLeg2Box, this.layer2MaterialBiased);
+		
+		const rightLegArmorBox = new BoxGeometry(5, 13, 5);
+		setSkinUVs(rightLegArmorBox, 0, 48, 4, 12, 4);
+		const rightLegArmorMesh = new Mesh(rightLegArmorBox, this.layerArmorMaterialBiased);
 
 		const rightLegPivot = new Group();
-		rightLegPivot.add(rightLegMesh, rightLeg2Mesh);
+		rightLegPivot.add(rightLegMesh, rightLeg2Mesh, rightLegArmorMesh);
 		rightLegPivot.position.y = -6;
 
-		this.rightLeg = new BodyPart(rightLegMesh, rightLeg2Mesh);
+		this.rightLeg = new BodyPart(rightLegMesh, rightLeg2Mesh, rightLegArmorMesh);
 		this.rightLeg.name = "rightLeg";
 		this.rightLeg.add(rightLegPivot);
 		this.rightLeg.position.x = -1.9;
@@ -246,12 +289,16 @@ export class SkinObject extends Group {
 		const leftLeg2Box = new BoxGeometry(4.5, 12.5, 4.5);
 		setSkinUVs(leftLeg2Box, 0, 48, 4, 12, 4);
 		const leftLeg2Mesh = new Mesh(leftLeg2Box, this.layer2MaterialBiased);
+		
+		const leftLegArmorBox = new BoxGeometry(5, 13, 5);
+		setSkinUVs(leftLegArmorBox, 0, 48, 4, 12, 4);
+		const leftLegArmorMesh = new Mesh(leftLegArmorBox, this.layerArmorMaterialBiased);
 
 		const leftLegPivot = new Group();
-		leftLegPivot.add(leftLegMesh, leftLeg2Mesh);
+		leftLegPivot.add(leftLegMesh, leftLeg2Mesh, leftLegArmorMesh);
 		leftLegPivot.position.y = -6;
 
-		this.leftLeg = new BodyPart(leftLegMesh, leftLeg2Mesh);
+		this.leftLeg = new BodyPart(leftLegMesh, leftLeg2Mesh, leftLegArmorMesh);
 		this.leftLeg.name = "leftLeg";
 		this.leftLeg.add(leftLegPivot);
 		this.leftLeg.position.x = 1.9;
@@ -280,6 +327,12 @@ export class SkinObject extends Group {
 
 		this.layer2MaterialBiased.map = newMap;
 		this.layer2MaterialBiased.needsUpdate = true;
+		
+		//this.layerArmorMaterial.map = newMap;
+		//this.layerArmorMaterial.needsUpdate = true;
+
+		//this.layerArmorMaterialBiased.map = newMap;
+		//this.layerArmorMaterialBiased.needsUpdate = true;
 	}
 
 	get modelType(): ModelType {
@@ -301,6 +354,10 @@ export class SkinObject extends Group {
 
 	setOuterLayerVisible(value: boolean): void {
 		this.getBodyParts().forEach(part => (part.outerLayer.visible = value));
+	}
+	
+	setArmorLayerVisible(value: boolean): void {
+		this.getBodyParts().forEach(part => (part.ArmorLayer.visible = value));
 	}
 
 	resetJoints(): void {
